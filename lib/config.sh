@@ -17,9 +17,15 @@ _worktree_load_project_config() {
     WORKTREE_PROCFILE_TEMPLATE=""  # Must be set per-project
 
     # Load project config if it exists
-    local git_root
-    git_root=$(git rev-parse --show-toplevel 2>/dev/null)
-    if [ -n "$git_root" ] && [ -f "$git_root/.worktree.config" ]; then
-        source "$git_root/.worktree.config"
+    # When in a worktree, look for config in the main repo
+    local config_dir
+    if _worktree_is_main_repo; then
+        config_dir=$(git rev-parse --show-toplevel 2>/dev/null)
+    else
+        config_dir=$(_worktree_get_main_repo)
+    fi
+
+    if [ -n "$config_dir" ] && [ -f "$config_dir/.worktree.config" ]; then
+        source "$config_dir/.worktree.config"
     fi
 }

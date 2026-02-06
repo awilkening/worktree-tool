@@ -64,12 +64,21 @@ _worktree_init() {
     source_db="${source_db:-$dev_db_prefix}"
 
     # Setup command
-    local setup_cmd="bin/update"
-    if [ ! -f "$git_root/bin/update" ]; then
+    local setup_cmd=""
+    if [ -f "$git_root/bin/update" ]; then
+        setup_cmd="bin/update"
+    elif [ -f "$git_root/bin/setup" ]; then
         setup_cmd="bin/setup"
     fi
-    read "?Setup command [$setup_cmd]: " input_setup 2>/dev/null || read -p "Setup command [$setup_cmd]: " input_setup
-    setup_cmd="${input_setup:-$setup_cmd}"
+
+    if [ -n "$setup_cmd" ]; then
+        read "?Setup command [$setup_cmd]: " input_setup 2>/dev/null || read -p "Setup command [$setup_cmd]: " input_setup
+        setup_cmd="${input_setup:-$setup_cmd}"
+    else
+        echo "No bin/update or bin/setup found."
+        read "?Setup command (or leave empty to skip): " input_setup 2>/dev/null || read -p "Setup command (or leave empty to skip): " input_setup
+        setup_cmd="$input_setup"
+    fi
 
     # Procfile template
     echo ""

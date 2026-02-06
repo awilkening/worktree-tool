@@ -16,11 +16,13 @@ if [ -n "$ZSH_VERSION" ]; then
                         # Complete with worktree directory names from registry
                         if [ -f "$WORKTREE_PORT_REGISTRY" ]; then
                             local worktrees=()
+                            local OLD_IFS="$IFS"
                             while IFS=: read -r path slot; do
                                 if [ -d "$path" ]; then
                                     worktrees+=("${path##*/}")
                                 fi
                             done < "$WORKTREE_PORT_REGISTRY"
+                            IFS="$OLD_IFS"
                             [ ${#worktrees[@]} -gt 0 ] && compadd -a worktrees
                         fi
                         ;;
@@ -54,11 +56,13 @@ if [ -n "$BASH_VERSION" ]; then
                 remove|rm|cd)
                     if [ -f "$WORKTREE_PORT_REGISTRY" ]; then
                         local worktrees=""
+                        local OLD_IFS="$IFS"
                         while IFS=: read -r path slot; do
                             if [ -d "$path" ]; then
                                 worktrees="$worktrees ${path##*/}"
                             fi
                         done < "$WORKTREE_PORT_REGISTRY"
+                        IFS="$OLD_IFS"
                         COMPREPLY=($(compgen -W "$worktrees" -- "$cur"))
                     fi
                     ;;
