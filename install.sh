@@ -146,11 +146,9 @@ main() {
         echo "     source $INSTALL_DIR/worktree.sh"
     fi
     echo ""
-    echo "  2. Create .worktree.config in your project:"
+    echo "  2. Initialize your project:"
     echo "     cd ~/your-rails-project"
-    echo "     echo 'WORKTREE_DEV_DB_PREFIX=\"yourapp_development\"' > .worktree.config"
-    echo "     echo 'WORKTREE_TEST_DB_PREFIX=\"yourapp_test\"' >> .worktree.config"
-    echo "     echo 'WORKTREE_SOURCE_DB=\"yourapp_development\"' >> .worktree.config"
+    echo "     worktree init"
     echo ""
     echo "  3. Create your first worktree:"
     echo "     worktree add my-feature --setup"

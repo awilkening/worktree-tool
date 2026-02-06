@@ -72,26 +72,24 @@ worker: bin/sidekiq'
 
 ## Usage
 
+### First Time Setup
+
+Run `worktree init` in your project to create `.worktree.config`:
+
+```bash
+cd ~/projects/myapp
+worktree init
+# Prompts for DB prefix, detects processes, creates config
+```
+
 ### Basic Workflow
 
 ```bash
-# 1. From your main repo, create a worktree for a feature branch
-cd ~/projects/myapp
-worktree add my-feature
-
-# 2. Set up the worktree (clone DB, install deps)
-worktree setup
-
-# 3. Start the development server
-worktree start
-
-# 4. View your app at the assigned port
-worktree info
-# => URL: http://localhost:3001
-
-# 5. When done, stop the server and remove
-worktree stop
-worktree remove my-feature
+worktree add my-feature      # Create worktree, cd into it
+worktree setup               # Clone DB, install deps
+worktree start               # Start dev server
+worktree info                # Show URL and config
+worktree remove my-feature   # Clean up when done
 ```
 
 ### Quick Start (All-in-One)
@@ -105,6 +103,7 @@ worktree start -D  # -D to daemonize
 
 | Command | Description |
 |---------|-------------|
+| `worktree init` | Initialize `.worktree.config` for current project |
 | `worktree add <branch> [--setup]` | Create a new worktree (optionally run full setup) |
 | `worktree setup` | Clone DB and run setup command |
 | `worktree start [-D]` | Start dev server (-D to daemonize) |
@@ -127,6 +126,7 @@ worktree start -D  # -D to daemonize
 | Alias | Command |
 |-------|---------|
 | `wt` | `worktree` |
+| `wtin` | `worktree init` |
 | `wta` | `worktree add` |
 | `wts` | `worktree start` |
 | `wtp` | `worktree stop` |

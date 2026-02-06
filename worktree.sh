@@ -44,6 +44,9 @@ worktree() {
     shift
 
     case "$ACTION" in
+        init)
+            _worktree_init "$@"
+            ;;
         add)
             _worktree_add "$@"
             ;;
@@ -106,6 +109,7 @@ _worktree_usage() {
 Usage: worktree <command> [options]
 
 Commands:
+  init                    Initialize .worktree.config for current project
   add <branch> [--setup]  Create a new worktree (optionally run full setup)
   setup                   Clone DB and run setup command (run from within worktree)
   start [-D]              Start dev server with unique ports (-D to daemonize)
@@ -124,24 +128,16 @@ Commands:
   help                    Show this help message
 
 Workflow:
+  worktree init                # First time: create .worktree.config
   worktree add my-feature      # Create worktree, cd into it
   worktree setup               # Clone DB, run setup command
   worktree start               # Start Rails + Vite on unique ports
-  worktree stop                # Stop servers
   worktree info                # Show URL and config
-  worktree list                # Show all worktrees
   worktree remove my-feature   # Remove worktree, optionally drop DB
 
 Quick start:
-  worktree add my-feature --setup   # Create + full setup in one command
-
-Configuration:
-  Create .worktree.config in your project root:
-
-    WORKTREE_DEV_DB_PREFIX="myapp_development"
-    WORKTREE_TEST_DB_PREFIX="myapp_test"
-    WORKTREE_SOURCE_DB="myapp_development"
-    WORKTREE_PROCFILE_TEMPLATE='web: bin/rails s -p \${PORT:-3000}'
+  worktree init                      # Configure project (first time only)
+  worktree add my-feature --setup    # Create + full setup in one command
 EOF
 }
 
@@ -218,6 +214,140 @@ _worktree_get_main_repo() {
 # ============================================================================
 # COMMAND IMPLEMENTATIONS
 # ============================================================================
+
+_worktree_init() {
+    # Check if we're in a git repo
+    if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+        echo "Error: Not inside a git repository"
+        return 1
+    fi
+
+    local git_root=$(git rev-parse --show-toplevel)
+    local config_file="$git_root/.worktree.config"
+
+    # Check if config already exists
+    if [ -f "$config_file" ]; then
+        echo "Config already exists: $config_file"
+        cat "$config_file"
+        echo ""
+        local overwrite
+        read "?Overwrite? [y/N]: " overwrite 2>/dev/null || read -p "Overwrite? [y/N]: " overwrite
+        if [[ ! "$overwrite" =~ ^[Yy]$ ]]; then
+            echo "Aborted."
+            return 0
+        fi
+    fi
+
+    # Try to detect database name from database.yml
+    local detected_db=""
+    local db_yml="$git_root/config/database.yml"
+    if [ -f "$db_yml" ]; then
+        # Look for development database name
+        detected_db=$(grep -A5 "^development:" "$db_yml" 2>/dev/null | grep "database:" | head -1 | sed 's/.*database: *//' | sed 's/ *#.*//' | tr -d '[:space:]')
+        # Handle ERB: <%= ... %>
+        if [[ "$detected_db" == *"<%"* ]]; then
+            detected_db=""
+        fi
+    fi
+
+    # Prompt for database prefix
+    local dev_db_prefix
+    if [ -n "$detected_db" ]; then
+        echo "Detected database: $detected_db"
+        read "?Development DB prefix [$detected_db]: " dev_db_prefix 2>/dev/null || read -p "Development DB prefix [$detected_db]: " dev_db_prefix
+        dev_db_prefix="${dev_db_prefix:-$detected_db}"
+    else
+        read "?Development DB prefix: " dev_db_prefix 2>/dev/null || read -p "Development DB prefix: " dev_db_prefix
+        if [ -z "$dev_db_prefix" ]; then
+            echo "Error: DB prefix is required"
+            return 1
+        fi
+    fi
+
+    # Derive test DB prefix (replace _development with _test, or append _test)
+    local test_db_prefix
+    if [[ "$dev_db_prefix" == *"_development"* ]]; then
+        test_db_prefix="${dev_db_prefix/_development/_test}"
+    else
+        test_db_prefix="${dev_db_prefix}_test"
+    fi
+    read "?Test DB prefix [$test_db_prefix]: " input_test_db 2>/dev/null || read -p "Test DB prefix [$test_db_prefix]: " input_test_db
+    test_db_prefix="${input_test_db:-$test_db_prefix}"
+
+    # Source DB (usually same as dev prefix)
+    read "?Source DB to clone [$dev_db_prefix]: " source_db 2>/dev/null || read -p "Source DB to clone [$dev_db_prefix]: " source_db
+    source_db="${source_db:-$dev_db_prefix}"
+
+    # Setup command
+    local setup_cmd="bin/update"
+    if [ ! -f "$git_root/bin/update" ]; then
+        setup_cmd="bin/setup"
+    fi
+    read "?Setup command [$setup_cmd]: " input_setup 2>/dev/null || read -p "Setup command [$setup_cmd]: " input_setup
+    setup_cmd="${input_setup:-$setup_cmd}"
+
+    # Procfile template
+    echo ""
+    echo "Procfile template (processes to run with 'worktree start')"
+    echo "Use \${PORT} for Rails port, \${VITE_RUBY_PORT} for Vite port"
+    echo ""
+
+    # Detect what processes might be needed
+    local has_vite=false
+    local has_sidekiq=false
+    local has_good_job=false
+    [ -f "$git_root/config/vite.json" ] || [ -f "$git_root/vite.config.js" ] || [ -f "$git_root/vite.config.ts" ] && has_vite=true
+    [ -f "$git_root/config/sidekiq.yml" ] && has_sidekiq=true
+    grep -q "good_job" "$git_root/Gemfile" 2>/dev/null && has_good_job=true
+
+    local default_procfile="web: bin/rails s -p \${PORT:-3000}"
+    if $has_vite; then
+        default_procfile="$default_procfile
+vite: bin/vite dev --clobber"
+    fi
+    if $has_sidekiq; then
+        default_procfile="$default_procfile
+worker: bin/sidekiq"
+    elif $has_good_job; then
+        default_procfile="$default_procfile
+worker: bin/good_job"
+    fi
+
+    echo "Suggested template:"
+    echo "$default_procfile"
+    echo ""
+    echo "Press Enter to accept, or type your own (use \\n for newlines):"
+    local input_procfile
+    read "?> " input_procfile 2>/dev/null || read -p "> " input_procfile
+
+    local procfile_template
+    if [ -z "$input_procfile" ]; then
+        procfile_template="$default_procfile"
+    else
+        # Convert \n to actual newlines
+        procfile_template=$(echo -e "$input_procfile")
+    fi
+
+    # Write config file
+    cat > "$config_file" << EOF
+# worktree-tool configuration
+# Generated by 'worktree init'
+
+WORKTREE_DEV_DB_PREFIX="$dev_db_prefix"
+WORKTREE_TEST_DB_PREFIX="$test_db_prefix"
+WORKTREE_SOURCE_DB="$source_db"
+WORKTREE_SETUP_COMMAND="$setup_cmd"
+
+WORKTREE_PROCFILE_TEMPLATE='$procfile_template'
+EOF
+
+    echo ""
+    echo "Created: $config_file"
+    echo ""
+    cat "$config_file"
+    echo ""
+    echo "You can now run: worktree add <branch-name>"
+}
 
 _worktree_add() {
     local BRANCH_NAME="$1"
@@ -857,7 +987,7 @@ if [ -n "$ZSH_VERSION" ]; then
         case "$CURRENT" in
             2)
                 # Complete commands
-                compadd add setup start stop restart info run console open logs connect cd list ls prune remove rm help
+                compadd init add setup start stop restart info run console open logs connect cd list ls prune remove rm help
                 ;;
             3)
                 case "$cmd" in
@@ -897,7 +1027,7 @@ if [ -n "$BASH_VERSION" ]; then
         local cmd="${COMP_WORDS[1]}"
 
         if [ "$COMP_CWORD" -eq 1 ]; then
-            COMPREPLY=($(compgen -W "add setup start stop restart info run console open logs connect cd list ls prune remove rm help" -- "$cur"))
+            COMPREPLY=($(compgen -W "init add setup start stop restart info run console open logs connect cd list ls prune remove rm help" -- "$cur"))
         elif [ "$COMP_CWORD" -eq 2 ]; then
             case "$cmd" in
                 remove|rm|cd)
@@ -930,6 +1060,7 @@ fi
 # ============================================================================
 
 alias wt='worktree'
+alias wtin='worktree init'
 alias wta='worktree add'
 alias wts='worktree start'
 alias wtp='worktree stop'
