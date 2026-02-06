@@ -10,8 +10,10 @@ _worktree_setup() {
         return 1
     fi
 
-    # Source .overmind.env to get DB name
+    # Source .overmind.env and export all variables for child processes
+    set -a
     source .overmind.env
+    set +a
 
     local SOURCE_DB="$WORKTREE_SOURCE_DB"
     local TARGET_DB="$DB_NAME"
