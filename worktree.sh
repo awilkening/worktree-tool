@@ -11,22 +11,12 @@
 # CONFIGURATION
 # ============================================================================
 # Project-specific settings go in .worktree.config in your project root.
-# All settings have sensible defaults.
 
 # Global defaults
 WORKTREE_PORT_REGISTRY="$HOME/.worktree-ports"
 WORKTREE_BASE_RAILS_PORT=3000
 WORKTREE_BASE_VITE_PORT=3036
 WORKTREE_MAX_DB_NAME_LENGTH=63
-
-# Auto-detect Redis config (Homebrew Apple Silicon vs Intel)
-if [ -f "/opt/homebrew/etc/redis.conf" ]; then
-    WORKTREE_REDIS_CONF="/opt/homebrew/etc/redis.conf"
-elif [ -f "/usr/local/etc/redis.conf" ]; then
-    WORKTREE_REDIS_CONF="/usr/local/etc/redis.conf"
-else
-    WORKTREE_REDIS_CONF=""
-fi
 
 # Load project-specific config (called by commands that need it)
 _worktree_load_project_config() {
@@ -35,9 +25,7 @@ _worktree_load_project_config() {
     WORKTREE_TEST_DB_PREFIX="myapp_test"
     WORKTREE_SOURCE_DB="myapp_development"
     WORKTREE_SETUP_COMMAND="bin/update"
-    WORKTREE_PROCFILE_TEMPLATE='web: WEB_CONCURRENCY=1 RUBY_DEBUG_OPEN=true bin/rails s -p ${PORT:-3000}
-vite: bin/vite dev --clobber
-worker: bin/sidekiq'
+    WORKTREE_PROCFILE_TEMPLATE=""  # Must be set per-project
 
     # Load project config if it exists
     local git_root
@@ -153,6 +141,7 @@ Configuration:
     WORKTREE_DEV_DB_PREFIX="myapp_development"
     WORKTREE_TEST_DB_PREFIX="myapp_test"
     WORKTREE_SOURCE_DB="myapp_development"
+    WORKTREE_PROCFILE_TEMPLATE='web: bin/rails s -p \${PORT:-3000}'
 EOF
 }
 
@@ -336,6 +325,13 @@ EOF
     echo "  Rails port: $RAILS_PORT"
     echo "  Vite port: $VITE_PORT"
 
+    if [ -z "$WORKTREE_PROCFILE_TEMPLATE" ]; then
+        echo ""
+        echo "Warning: WORKTREE_PROCFILE_TEMPLATE not set in .worktree.config"
+        echo "You'll need to create Procfile.local manually before running 'worktree start'"
+        echo "Use \${PORT} for Rails port and \${VITE_RUBY_PORT} for Vite port"
+    fi
+
     # Change to the new worktree directory
     cd "$WORKTREE_PATH"
 
@@ -345,7 +341,7 @@ EOF
         _worktree_setup
     else
         echo ""
-        echo "Tests can be run now. Run 'worktree setup' to clone the dev database and install dependencies."
+        echo "Run 'worktree setup' to clone the dev database and install dependencies."
     fi
 }
 
@@ -410,24 +406,9 @@ _worktree_start() {
 
     # Check for Procfile.local
     if [ ! -f "Procfile.local" ]; then
-        echo "Error: Procfile.local not found. Are you in a worktree created with 'worktree add'?"
+        echo "Error: Procfile.local not found."
+        echo "Set WORKTREE_PROCFILE_TEMPLATE in your .worktree.config"
         return 1
-    fi
-
-    # Ensure Redis is running (shared service)
-    if command -v redis-cli &>/dev/null && ! redis-cli ping &>/dev/null; then
-        echo "Starting Redis..."
-        if [ -f "$WORKTREE_REDIS_CONF" ]; then
-            redis-server "$WORKTREE_REDIS_CONF" --daemonize yes
-        else
-            redis-server --daemonize yes
-        fi
-        sleep 1
-        if redis-cli ping &>/dev/null; then
-            echo "Redis started."
-        else
-            echo "Warning: Failed to start Redis. Some features may not work."
-        fi
     fi
 
     # Source .overmind.env to get ports for display

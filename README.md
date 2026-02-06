@@ -53,9 +53,12 @@ Create `.worktree.config` in your project root:
 WORKTREE_DEV_DB_PREFIX="myapp_development"
 WORKTREE_TEST_DB_PREFIX="myapp_test"
 WORKTREE_SOURCE_DB="myapp_development"
-```
 
-That's it! Everything else has sensible defaults (ports auto-increment, Redis config auto-detected).
+# Your Procfile template - use ${PORT} for the Rails port
+WORKTREE_PROCFILE_TEMPLATE='web: bin/rails s -p ${PORT:-3000}
+vite: bin/vite dev --clobber
+worker: bin/sidekiq'
+```
 
 ### All Settings
 
@@ -65,7 +68,7 @@ That's it! Everything else has sensible defaults (ports auto-increment, Redis co
 | `WORKTREE_TEST_DB_PREFIX` | `myapp_test` | Test database prefix |
 | `WORKTREE_SOURCE_DB` | `myapp_development` | Database to clone from |
 | `WORKTREE_SETUP_COMMAND` | `bin/update` | Command to run during setup |
-| `WORKTREE_PROCFILE_TEMPLATE` | Rails/Vite/Sidekiq | Procfile.local template |
+| `WORKTREE_PROCFILE_TEMPLATE` | *(none)* | Procfile.local template (required for `worktree start`) |
 
 ## Usage
 
