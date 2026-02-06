@@ -316,7 +316,7 @@ worker: bin/good_job"
     echo "Suggested template:"
     echo "$default_procfile"
     echo ""
-    echo "Press Enter to accept, or type your own (use \\n for newlines):"
+    echo "Press Enter to accept, or type custom (separate processes with \\\\n):"
     local input_procfile
     read "?> " input_procfile 2>/dev/null || read -p "> " input_procfile
 
