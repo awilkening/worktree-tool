@@ -34,14 +34,15 @@ curl -fsSL https://raw.githubusercontent.com/awilkening/worktree-tool/main/insta
    git clone https://github.com/awilkening/worktree-tool.git ~/.worktree-tool
    ```
 
-2. Add to your shell config (`~/.zshrc` or `~/.bashrc`):
+2. Create a symlink and add to your shell config (`~/.zshrc` or `~/.bashrc`):
    ```bash
-   source ~/.worktree-tool/worktree.sh
+   ln -s ~/.worktree-tool/worktree.sh ~/.worktree.sh
+   echo 'source "$HOME/.worktree.sh"' >> ~/.zshrc
    ```
 
 3. Reload your shell:
    ```bash
-   source ~/.zshrc  # or ~/.bashrc
+   source ~/.worktree.sh
    ```
 
 ## Configuration
@@ -116,7 +117,7 @@ worktree start -D  # -D to daemonize
 | `worktree logs` | View server logs |
 | `worktree connect <process>` | Connect to overmind process |
 | `worktree cd <name>` | Jump to a worktree |
-| `worktree list` | List all worktrees with ports/DBs |
+| `worktree list [-a]` | List worktrees for current project (-a for all) |
 | `worktree prune` | Clean up stale port registry entries |
 | `worktree remove <branch>` | Remove worktree (offers --wip or --force) |
 | `worktree help` | Show help message |
@@ -223,6 +224,23 @@ Run `worktree prune` to clean up stale port registry entries, then try again.
 ### Database Doesn't Exist
 
 Run `worktree setup` to clone the source database.
+
+## Project Structure
+
+```
+worktree.sh              # Entry point (sources lib files)
+lib/
+  config.sh              # Configuration defaults and loading
+  helpers.sh             # Helper functions (sanitize, slots, etc.)
+  completions.sh         # Tab completions and aliases
+  commands/
+    init.sh              # worktree init
+    add.sh               # worktree add
+    setup.sh             # worktree setup
+    server.sh            # start/stop/restart/logs/connect
+    info.sh              # info/list/cd/prune/run/console/open
+    remove.sh            # worktree remove
+```
 
 ## License
 
