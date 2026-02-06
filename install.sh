@@ -116,12 +116,24 @@ main() {
     # Make script executable
     chmod +x "$INSTALL_DIR/worktree.sh"
 
+    # Create symlink at ~/.worktree.sh
+    local symlink_path="$HOME/.worktree.sh"
+    if [ -L "$symlink_path" ]; then
+        info "Updating symlink at $symlink_path..."
+        rm "$symlink_path"
+    elif [ -f "$symlink_path" ]; then
+        warn "$symlink_path exists and is not a symlink, backing up..."
+        mv "$symlink_path" "$symlink_path.backup"
+    fi
+    ln -s "$INSTALL_DIR/worktree.sh" "$symlink_path"
+    info "Created symlink: ~/.worktree.sh -> $INSTALL_DIR/worktree.sh"
+
     # Detect shell and config file
     local shell=$(detect_shell)
     local config_file=$(get_shell_config "$shell")
 
     # Add to shell config if not already present
-    local source_line="source \"$INSTALL_DIR/worktree.sh\""
+    local source_line='source "$HOME/.worktree.sh"'
 
     if [ -n "$config_file" ]; then
         if grep -qF "worktree.sh" "$config_file" 2>/dev/null; then
@@ -140,11 +152,7 @@ main() {
     echo "  Next steps:"
     echo ""
     echo "  1. Reload your shell:"
-    if [ -n "$config_file" ]; then
-        echo "     source $config_file"
-    else
-        echo "     source $INSTALL_DIR/worktree.sh"
-    fi
+    echo "     source ~/.worktree.sh"
     echo ""
     echo "  2. Initialize your project:"
     echo "     cd ~/your-rails-project"
