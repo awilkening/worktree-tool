@@ -134,36 +134,24 @@ main() {
         fi
     fi
 
-    # Create default config if it doesn't exist
+    # Create default global config if it doesn't exist
     if [ ! -f "$HOME/.worktree.config" ]; then
-        info "Creating default config at ~/.worktree.config..."
+        info "Creating global config at ~/.worktree.config..."
         cat > "$HOME/.worktree.config" << 'EOF'
-# worktree-tool configuration
+# worktree-tool global configuration
 # https://github.com/awilkening/worktree-tool
 #
-# Uncomment and modify the settings below as needed.
-
-# Database configuration
-# WORKTREE_DEV_DB_PREFIX="myapp_development"    # Development DB prefix
-# WORKTREE_TEST_DB_PREFIX="myapp_test"          # Test DB prefix
-# WORKTREE_SOURCE_DB="myapp_development"        # Database to clone from
-
-# Port configuration
-# WORKTREE_BASE_RAILS_PORT=3000                 # Starting Rails port
-# WORKTREE_BASE_VITE_PORT=3036                  # Starting Vite port
-
-# Setup command (runs after creating worktree)
-# WORKTREE_SETUP_COMMAND="bin/update"
+# Global settings (shared across all projects)
+# Project-specific settings should go in .worktree.config in each project root
 
 # Redis configuration (for macOS Homebrew default)
 # WORKTREE_REDIS_CONF="/usr/local/etc/redis.conf"
 # For Homebrew on Apple Silicon:
-# WORKTREE_REDIS_CONF="/opt/homebrew/etc/redis.conf"
+WORKTREE_REDIS_CONF="/opt/homebrew/etc/redis.conf"
 
-# Procfile template (uses ${PORT} placeholder)
-# WORKTREE_PROCFILE_TEMPLATE='web: bin/rails s -p ${PORT:-3000}
-# vite: bin/vite dev
-# worker: bin/sidekiq'
+# Port configuration (optional - defaults work for most setups)
+# WORKTREE_BASE_RAILS_PORT=3000
+# WORKTREE_BASE_VITE_PORT=3036
 EOF
     fi
 
@@ -172,8 +160,14 @@ EOF
     echo ""
     echo "  Next steps:"
     echo ""
-    echo "  1. Configure your database prefix in ~/.worktree.config"
-    echo "     Edit WORKTREE_DEV_DB_PREFIX, WORKTREE_TEST_DB_PREFIX, and WORKTREE_SOURCE_DB"
+    echo "  1. Create a .worktree.config in your project root:"
+    echo ""
+    echo "     cd ~/your-rails-project"
+    echo "     cat > .worktree.config << 'EOF'"
+    echo "     WORKTREE_DEV_DB_PREFIX=\"yourapp_development\""
+    echo "     WORKTREE_TEST_DB_PREFIX=\"yourapp_test\""
+    echo "     WORKTREE_SOURCE_DB=\"yourapp_development\""
+    echo "     EOF"
     echo ""
     echo "  2. Reload your shell:"
     if [ -n "$config_file" ]; then

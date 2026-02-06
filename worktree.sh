@@ -10,34 +10,49 @@
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-# Override these in your shell config BEFORE sourcing this file, or create
-# ~/.worktree.config and set them there.
+# Configuration is loaded in this order (later overrides earlier):
+#   1. Defaults (defined below)
+#   2. Global config: ~/.worktree.config
+#   3. Project config: .worktree.config in git root (loaded per-command)
+#
+# Project-specific settings (like DB prefix) should go in a .worktree.config
+# file in each project's root directory.
 
-# Load user config if it exists
+# Global settings (loaded at source time)
 [ -f "$HOME/.worktree.config" ] && source "$HOME/.worktree.config"
 
-# Port management
+# Port management (global)
 : ${WORKTREE_PORT_REGISTRY:="$HOME/.worktree-ports"}
 : ${WORKTREE_BASE_RAILS_PORT:=3000}
 : ${WORKTREE_BASE_VITE_PORT:=3036}
 
-# Database configuration
-: ${WORKTREE_DEV_DB_PREFIX:="myapp_development"}     # Development DB prefix (branch appended)
-: ${WORKTREE_TEST_DB_PREFIX:="myapp_test"}           # Test DB prefix (branch appended)
-: ${WORKTREE_SOURCE_DB:="myapp_development"}         # Source DB to clone from
-: ${WORKTREE_MAX_DB_NAME_LENGTH:=63}                 # PostgreSQL limit
-
-# Redis configuration
+# Redis configuration (global)
 : ${WORKTREE_REDIS_CONF:="/usr/local/etc/redis.conf"}
 
-# Setup command (run after creating worktree)
-: ${WORKTREE_SETUP_COMMAND:="bin/update"}
+# PostgreSQL limit (global)
+: ${WORKTREE_MAX_DB_NAME_LENGTH:=63}
 
-# Procfile template (set to empty string to skip Procfile.local creation)
-# Use ${PORT} and ${VITE_RUBY_PORT} placeholders
-: ${WORKTREE_PROCFILE_TEMPLATE:='web: WEB_CONCURRENCY=1 RUBY_DEBUG_OPEN=true bin/rails s -p ${PORT:-3000}
+# Load project-specific config (called by commands that need it)
+_worktree_load_project_config() {
+    # Reset to defaults first
+    WORKTREE_DEV_DB_PREFIX="myapp_development"
+    WORKTREE_TEST_DB_PREFIX="myapp_test"
+    WORKTREE_SOURCE_DB="myapp_development"
+    WORKTREE_SETUP_COMMAND="bin/update"
+    WORKTREE_PROCFILE_TEMPLATE='web: WEB_CONCURRENCY=1 RUBY_DEBUG_OPEN=true bin/rails s -p ${PORT:-3000}
 vite: bin/vite dev --clobber
-worker: bin/sidekiq'}
+worker: bin/sidekiq'
+
+    # Load global config
+    [ -f "$HOME/.worktree.config" ] && source "$HOME/.worktree.config"
+
+    # Find git root and load project config if it exists
+    local git_root
+    git_root=$(git rev-parse --show-toplevel 2>/dev/null)
+    if [ -n "$git_root" ] && [ -f "$git_root/.worktree.config" ]; then
+        source "$git_root/.worktree.config"
+    fi
+}
 
 # ============================================================================
 # MAIN FUNCTION
@@ -140,13 +155,18 @@ Quick start:
   worktree add my-feature --setup   # Create + full setup in one command
 
 Configuration:
-  Set these in ~/.worktree.config or export before sourcing worktree.sh:
+  Project config: .worktree.config in your project root (recommended)
+  Global config:  ~/.worktree.config (fallback)
+
+  Project-specific settings (DB prefix, source DB, setup command):
     WORKTREE_DEV_DB_PREFIX      Development DB prefix (default: myapp_development)
     WORKTREE_TEST_DB_PREFIX     Test DB prefix (default: myapp_test)
     WORKTREE_SOURCE_DB          Database to clone from (default: myapp_development)
+    WORKTREE_SETUP_COMMAND      Setup command (default: bin/update)
+
+  Global settings (ports, redis):
     WORKTREE_BASE_RAILS_PORT    Starting Rails port (default: 3000)
     WORKTREE_BASE_VITE_PORT     Starting Vite port (default: 3036)
-    WORKTREE_SETUP_COMMAND      Setup command (default: bin/update)
     WORKTREE_REDIS_CONF         Redis config path (default: /usr/local/etc/redis.conf)
 EOF
 }
@@ -233,6 +253,9 @@ _worktree_add() {
         echo "Usage: worktree add <branch-name> [--setup]"
         return 1
     fi
+
+    # Load project-specific config
+    _worktree_load_project_config
 
     # Check if we're in a git repo
     if ! git rev-parse --is-inside-work-tree &>/dev/null; then
@@ -342,6 +365,9 @@ EOF
 }
 
 _worktree_setup() {
+    # Load project-specific config
+    _worktree_load_project_config
+
     # Check for .overmind.env (created by worktree add)
     if [ ! -f ".overmind.env" ]; then
         echo "Error: .overmind.env not found. Are you in a worktree created with 'worktree add'?"
@@ -707,6 +733,9 @@ _worktree_remove() {
         echo "Usage: worktree remove <branch-name|worktree-dir> [--wip|--force]"
         return 1
     fi
+
+    # Load project-specific config
+    _worktree_load_project_config
 
     local CURRENT_DIR=$(basename "$(pwd)")
     local WORKTREE_PATH
