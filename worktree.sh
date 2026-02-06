@@ -7,8 +7,12 @@
 #
 # Then use: worktree <command> [options]
 
-# Determine the directory where this script lives
+# Determine the directory where this script lives (resolve symlinks)
 WORKTREE_TOOL_DIR="${BASH_SOURCE[0]:-$0}"
+# Resolve symlinks
+while [ -L "$WORKTREE_TOOL_DIR" ]; do
+    WORKTREE_TOOL_DIR="$(readlink "$WORKTREE_TOOL_DIR")"
+done
 WORKTREE_TOOL_DIR="$(cd "$(dirname "$WORKTREE_TOOL_DIR")" && pwd)"
 
 # Source all the parts
