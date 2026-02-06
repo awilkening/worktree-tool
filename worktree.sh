@@ -122,7 +122,7 @@ Commands:
   logs                    View overmind logs
   connect <process>       Connect to overmind process (web, vite, worker)
   cd <name>               Jump to a worktree by name
-  list                    List all worktrees with their ports and databases
+  list [-a]               List worktrees for current project (-a for all)
   prune                   Clean up stale entries from port registry
   remove <branch>         Remove worktree [--wip|--force]
   help                    Show this help message
@@ -775,33 +775,69 @@ _worktree_run() {
 }
 
 _worktree_list() {
-    echo "Worktrees:"
-    echo ""
+    local show_all=false
+    if [ "$1" = "-a" ] || [ "$1" = "--all" ]; then
+        show_all=true
+    fi
 
     if [ ! -f "$WORKTREE_PORT_REGISTRY" ] || [ ! -s "$WORKTREE_PORT_REGISTRY" ]; then
-        echo "  No worktrees registered."
+        echo "No worktrees registered."
         return 0
     fi
 
-    local path slot rails_port vite_port db_name short_path max_path_len=4
+    # Determine current project name for filtering
+    local current_project=""
+    if ! $show_all && git rev-parse --is-inside-work-tree &>/dev/null; then
+        if _worktree_is_main_repo; then
+            current_project=$(basename "$(pwd)")
+        else
+            current_project=$(basename "$(_worktree_get_main_repo)")
+        fi
+    fi
 
-    # First pass: find the longest path name
+    local path slot rails_port vite_port db_name short_path max_path_len=4
+    local has_entries=false
+
+    # First pass: find the longest path name (filtered)
     while IFS=: read -r path slot; do
         if [ -d "$path" ]; then
             short_path="${path##*/}"
+            # Filter by project if not showing all
+            if [ -n "$current_project" ] && [[ "$short_path" != "${current_project}-"* ]]; then
+                continue
+            fi
+            has_entries=true
             if [ ${#short_path} -gt $max_path_len ]; then
                 max_path_len=${#short_path}
             fi
         fi
     done < "$WORKTREE_PORT_REGISTRY"
 
+    if ! $has_entries; then
+        if [ -n "$current_project" ]; then
+            echo "No worktrees for $current_project. Use 'worktree list -a' to see all."
+        else
+            echo "No worktrees registered."
+        fi
+        return 0
+    fi
+
+    echo "Worktrees${current_project:+ for $current_project}:"
+    echo ""
+
     # Print header with dynamic width
     printf "  %-${max_path_len}s  %-12s %-12s %s\n" "PATH" "RAILS PORT" "VITE PORT" "DATABASE"
     printf "  %-${max_path_len}s  %-12s %-12s %s\n" "----" "----------" "---------" "--------"
 
-    # Second pass: print the data
+    # Second pass: print the data (filtered)
     while IFS=: read -r path slot; do
         if [ -d "$path" ]; then
+            short_path="${path##*/}"
+            # Filter by project if not showing all
+            if [ -n "$current_project" ] && [[ "$short_path" != "${current_project}-"* ]]; then
+                continue
+            fi
+
             rails_port=$((WORKTREE_BASE_RAILS_PORT + slot))
             vite_port=$((WORKTREE_BASE_VITE_PORT + slot))
             db_name=""
@@ -810,9 +846,6 @@ _worktree_list() {
             if [ -f "$path/.overmind.env" ]; then
                 db_name=$(/usr/bin/grep "^DB_NAME=" "$path/.overmind.env" 2>/dev/null | /usr/bin/cut -d= -f2)
             fi
-
-            # Shorten path for display
-            short_path="${path##*/}"
 
             printf "  %-${max_path_len}s  %-12s %-12s %s\n" "$short_path" "$rails_port" "$vite_port" "$db_name"
         fi
