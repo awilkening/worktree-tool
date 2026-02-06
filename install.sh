@@ -134,50 +134,25 @@ main() {
         fi
     fi
 
-    # Create default global config if it doesn't exist
-    if [ ! -f "$HOME/.worktree.config" ]; then
-        info "Creating global config at ~/.worktree.config..."
-        cat > "$HOME/.worktree.config" << 'EOF'
-# worktree-tool global configuration
-# https://github.com/awilkening/worktree-tool
-#
-# Global settings (shared across all projects)
-# Project-specific settings should go in .worktree.config in each project root
-
-# Redis configuration (for macOS Homebrew default)
-# WORKTREE_REDIS_CONF="/usr/local/etc/redis.conf"
-# For Homebrew on Apple Silicon:
-WORKTREE_REDIS_CONF="/opt/homebrew/etc/redis.conf"
-
-# Port configuration (optional - defaults work for most setups)
-# WORKTREE_BASE_RAILS_PORT=3000
-# WORKTREE_BASE_VITE_PORT=3036
-EOF
-    fi
-
     echo ""
     success "Installation complete!"
     echo ""
     echo "  Next steps:"
     echo ""
-    echo "  1. Create a .worktree.config in your project root:"
-    echo ""
-    echo "     cd ~/your-rails-project"
-    echo "     cat > .worktree.config << 'EOF'"
-    echo "     WORKTREE_DEV_DB_PREFIX=\"yourapp_development\""
-    echo "     WORKTREE_TEST_DB_PREFIX=\"yourapp_test\""
-    echo "     WORKTREE_SOURCE_DB=\"yourapp_development\""
-    echo "     EOF"
-    echo ""
-    echo "  2. Reload your shell:"
+    echo "  1. Reload your shell:"
     if [ -n "$config_file" ]; then
         echo "     source $config_file"
     else
         echo "     source $INSTALL_DIR/worktree.sh"
     fi
     echo ""
-    echo "  3. Create your first worktree:"
+    echo "  2. Create .worktree.config in your project:"
     echo "     cd ~/your-rails-project"
+    echo "     echo 'WORKTREE_DEV_DB_PREFIX=\"yourapp_development\"' > .worktree.config"
+    echo "     echo 'WORKTREE_TEST_DB_PREFIX=\"yourapp_test\"' >> .worktree.config"
+    echo "     echo 'WORKTREE_SOURCE_DB=\"yourapp_development\"' >> .worktree.config"
+    echo ""
+    echo "  3. Create your first worktree:"
     echo "     worktree add my-feature --setup"
     echo ""
     echo "  For more info: worktree help"

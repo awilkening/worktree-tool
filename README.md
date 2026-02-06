@@ -46,56 +46,26 @@ curl -fsSL https://raw.githubusercontent.com/awilkening/worktree-tool/main/insta
 
 ## Configuration
 
-Configuration is loaded in this order (later overrides earlier):
-1. Built-in defaults
-2. Global config: `~/.worktree.config`
-3. Project config: `.worktree.config` in your project root
-
-### Project Config (Recommended)
-
-Create `.worktree.config` in your project root with database-specific settings:
+Create `.worktree.config` in your project root:
 
 ```bash
-# .worktree.config - add to .gitignore or commit for team sharing
+# .worktree.config
 WORKTREE_DEV_DB_PREFIX="myapp_development"
 WORKTREE_TEST_DB_PREFIX="myapp_test"
 WORKTREE_SOURCE_DB="myapp_development"
-WORKTREE_SETUP_COMMAND="bin/update"
-
-# Optional: custom Procfile template
-WORKTREE_PROCFILE_TEMPLATE='web: bin/rails s -p ${PORT:-3000}
-vite: bin/vite dev --clobber
-worker: bin/sidekiq'
 ```
 
-### Global Config
-
-Create `~/.worktree.config` for settings shared across all projects:
-
-```bash
-# Port configuration (global)
-WORKTREE_BASE_RAILS_PORT=3000
-WORKTREE_BASE_VITE_PORT=3036
-
-# Redis configuration
-WORKTREE_REDIS_CONF="/usr/local/etc/redis.conf"
-# For Homebrew on Apple Silicon:
-# WORKTREE_REDIS_CONF="/opt/homebrew/etc/redis.conf"
-```
+That's it! Everything else has sensible defaults (ports auto-increment, Redis config auto-detected).
 
 ### All Settings
 
-| Setting | Default | Scope | Description |
-|---------|---------|-------|-------------|
-| `WORKTREE_DEV_DB_PREFIX` | `myapp_development` | Project | Development database prefix |
-| `WORKTREE_TEST_DB_PREFIX` | `myapp_test` | Project | Test database prefix |
-| `WORKTREE_SOURCE_DB` | `myapp_development` | Project | Database to clone from |
-| `WORKTREE_SETUP_COMMAND` | `bin/update` | Project | Command to run during setup |
-| `WORKTREE_PROCFILE_TEMPLATE` | Rails/Vite/Sidekiq | Project | Procfile.local template |
-| `WORKTREE_BASE_RAILS_PORT` | `3000` | Global | Starting port for Rails |
-| `WORKTREE_BASE_VITE_PORT` | `3036` | Global | Starting port for Vite |
-| `WORKTREE_REDIS_CONF` | `/usr/local/etc/redis.conf` | Global | Redis config path |
-| `WORKTREE_PORT_REGISTRY` | `~/.worktree-ports` | Global | Port assignment file |
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `WORKTREE_DEV_DB_PREFIX` | `myapp_development` | Development database prefix |
+| `WORKTREE_TEST_DB_PREFIX` | `myapp_test` | Test database prefix |
+| `WORKTREE_SOURCE_DB` | `myapp_development` | Database to clone from |
+| `WORKTREE_SETUP_COMMAND` | `bin/update` | Command to run during setup |
+| `WORKTREE_PROCFILE_TEMPLATE` | Rails/Vite/Sidekiq | Procfile.local template |
 
 ## Usage
 

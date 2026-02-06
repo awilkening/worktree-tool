@@ -10,31 +10,27 @@
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
-# Configuration is loaded in this order (later overrides earlier):
-#   1. Defaults (defined below)
-#   2. Global config: ~/.worktree.config
-#   3. Project config: .worktree.config in git root (loaded per-command)
-#
-# Project-specific settings (like DB prefix) should go in a .worktree.config
-# file in each project's root directory.
+# Project-specific settings go in .worktree.config in your project root.
+# All settings have sensible defaults.
 
-# Global settings (loaded at source time)
-[ -f "$HOME/.worktree.config" ] && source "$HOME/.worktree.config"
+# Global defaults
+WORKTREE_PORT_REGISTRY="$HOME/.worktree-ports"
+WORKTREE_BASE_RAILS_PORT=3000
+WORKTREE_BASE_VITE_PORT=3036
+WORKTREE_MAX_DB_NAME_LENGTH=63
 
-# Port management (global)
-: ${WORKTREE_PORT_REGISTRY:="$HOME/.worktree-ports"}
-: ${WORKTREE_BASE_RAILS_PORT:=3000}
-: ${WORKTREE_BASE_VITE_PORT:=3036}
-
-# Redis configuration (global)
-: ${WORKTREE_REDIS_CONF:="/usr/local/etc/redis.conf"}
-
-# PostgreSQL limit (global)
-: ${WORKTREE_MAX_DB_NAME_LENGTH:=63}
+# Auto-detect Redis config (Homebrew Apple Silicon vs Intel)
+if [ -f "/opt/homebrew/etc/redis.conf" ]; then
+    WORKTREE_REDIS_CONF="/opt/homebrew/etc/redis.conf"
+elif [ -f "/usr/local/etc/redis.conf" ]; then
+    WORKTREE_REDIS_CONF="/usr/local/etc/redis.conf"
+else
+    WORKTREE_REDIS_CONF=""
+fi
 
 # Load project-specific config (called by commands that need it)
 _worktree_load_project_config() {
-    # Reset to defaults first
+    # Reset to defaults
     WORKTREE_DEV_DB_PREFIX="myapp_development"
     WORKTREE_TEST_DB_PREFIX="myapp_test"
     WORKTREE_SOURCE_DB="myapp_development"
@@ -43,10 +39,7 @@ _worktree_load_project_config() {
 vite: bin/vite dev --clobber
 worker: bin/sidekiq'
 
-    # Load global config
-    [ -f "$HOME/.worktree.config" ] && source "$HOME/.worktree.config"
-
-    # Find git root and load project config if it exists
+    # Load project config if it exists
     local git_root
     git_root=$(git rev-parse --show-toplevel 2>/dev/null)
     if [ -n "$git_root" ] && [ -f "$git_root/.worktree.config" ]; then
@@ -155,19 +148,11 @@ Quick start:
   worktree add my-feature --setup   # Create + full setup in one command
 
 Configuration:
-  Project config: .worktree.config in your project root (recommended)
-  Global config:  ~/.worktree.config (fallback)
+  Create .worktree.config in your project root:
 
-  Project-specific settings (DB prefix, source DB, setup command):
-    WORKTREE_DEV_DB_PREFIX      Development DB prefix (default: myapp_development)
-    WORKTREE_TEST_DB_PREFIX     Test DB prefix (default: myapp_test)
-    WORKTREE_SOURCE_DB          Database to clone from (default: myapp_development)
-    WORKTREE_SETUP_COMMAND      Setup command (default: bin/update)
-
-  Global settings (ports, redis):
-    WORKTREE_BASE_RAILS_PORT    Starting Rails port (default: 3000)
-    WORKTREE_BASE_VITE_PORT     Starting Vite port (default: 3036)
-    WORKTREE_REDIS_CONF         Redis config path (default: /usr/local/etc/redis.conf)
+    WORKTREE_DEV_DB_PREFIX="myapp_development"
+    WORKTREE_TEST_DB_PREFIX="myapp_test"
+    WORKTREE_SOURCE_DB="myapp_development"
 EOF
 }
 
