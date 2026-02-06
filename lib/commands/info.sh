@@ -49,12 +49,12 @@ _worktree_list() {
         fi
     fi
 
-    local path slot rails_port vite_port db_name short_path max_path_len=4
+    local line path slot rails_port vite_port db_name short_path max_path_len=4
     local has_entries=false
-    local OLD_IFS="$IFS"
 
     # First pass: find the longest path name (filtered)
-    while IFS=: read -r path slot; do
+    while read -r line; do
+        path="${line%%:*}"
         if [ -d "$path" ]; then
             short_path="${path##*/}"
             # Filter by project if not showing all
@@ -67,7 +67,6 @@ _worktree_list() {
             fi
         fi
     done < "$WORKTREE_PORT_REGISTRY"
-    IFS="$OLD_IFS"
 
     if ! $has_entries; then
         if [ -n "$current_project" ]; then
@@ -86,8 +85,9 @@ _worktree_list() {
     printf "  %-${max_path_len}s  %-12s %-12s %s\n" "----" "----------" "---------" "--------"
 
     # Second pass: print the data (filtered)
-    OLD_IFS="$IFS"
-    while IFS=: read -r path slot; do
+    while read -r line; do
+        path="${line%%:*}"
+        slot="${line#*:}"
         if [ -d "$path" ]; then
             short_path="${path##*/}"
             # Filter by project if not showing all
@@ -107,7 +107,6 @@ _worktree_list() {
             printf "  %-${max_path_len}s  %-12s %-12s %s\n" "$short_path" "$rails_port" "$vite_port" "$db_name"
         fi
     done < "$WORKTREE_PORT_REGISTRY"
-    IFS="$OLD_IFS"
 
     echo ""
 }
@@ -126,18 +125,17 @@ _worktree_cd() {
         return 1
     fi
 
-    local path slot found=""
-    local OLD_IFS="$IFS"
-    while IFS=: read -r path slot; do
-        local short_path="${path##*/}"
-        if [ "$short_path" = "$INPUT" ] || [ "${path##*/}" = "$INPUT" ]; then
+    local line path short_path found=""
+    while read -r line; do
+        path="${line%%:*}"
+        short_path="${path##*/}"
+        if [ "$short_path" = "$INPUT" ]; then
             if [ -d "$path" ]; then
                 found="$path"
                 break
             fi
         fi
     done < "$WORKTREE_PORT_REGISTRY"
-    IFS="$OLD_IFS"
 
     if [ -z "$found" ]; then
         echo "Error: Worktree '$INPUT' not found."
@@ -154,20 +152,19 @@ _worktree_prune() {
         return 0
     fi
 
-    local path slot removed=0
+    local line path removed=0
     local temp_file="${WORKTREE_PORT_REGISTRY}.tmp"
-    local OLD_IFS="$IFS"
     > "$temp_file"
 
-    while IFS=: read -r path slot; do
+    while read -r line; do
+        path="${line%%:*}"
         if [ -d "$path" ]; then
-            echo "${path}:${slot}" >> "$temp_file"
+            echo "$line" >> "$temp_file"
         else
             echo "Removing stale entry: ${path##*/}"
             removed=$((removed + 1))
         fi
     done < "$WORKTREE_PORT_REGISTRY"
-    IFS="$OLD_IFS"
 
     mv "$temp_file" "$WORKTREE_PORT_REGISTRY"
     echo "Pruned $removed stale entries."
