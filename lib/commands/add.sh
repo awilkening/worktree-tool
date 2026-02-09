@@ -87,8 +87,12 @@ _worktree_add() {
         done
     fi
 
-    # Create .overmind.env with port and DB config
+    # Copy Claude Code MCP server config if available
+    local MAIN_REPO_ABS_PATH=$(pwd)
     local WORKTREE_ABS_PATH=$(cd "$WORKTREE_PATH" && pwd)
+    _worktree_copy_claude_mcp_config "$MAIN_REPO_ABS_PATH" "$WORKTREE_ABS_PATH"
+
+    # Create .overmind.env with port and DB config
     local SLOT=$(_worktree_get_slot "$WORKTREE_ABS_PATH")
     local RAILS_PORT=$((WORKTREE_BASE_RAILS_PORT + SLOT))
     local VITE_PORT=$((WORKTREE_BASE_VITE_PORT + SLOT))

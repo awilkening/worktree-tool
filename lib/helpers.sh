@@ -65,3 +65,29 @@ _worktree_is_main_repo() {
 _worktree_get_main_repo() {
     git rev-parse --path-format=absolute --git-common-dir 2>/dev/null | sed 's/\/.git$//'
 }
+
+# Copy Claude Code MCP server config from main repo to worktree
+_worktree_copy_claude_mcp_config() {
+    local MAIN_REPO_PATH="$1"
+    local WORKTREE_PATH="$2"
+    local CLAUDE_CONFIG="$HOME/.claude.json"
+
+    # Check if jq is available and claude.json exists
+    if ! command -v jq &>/dev/null || [ ! -f "$CLAUDE_CONFIG" ]; then
+        return 0
+    fi
+
+    # Check if main repo has MCP servers configured
+    local MAIN_MCP_SERVERS
+    MAIN_MCP_SERVERS=$(jq -r --arg path "$MAIN_REPO_PATH" '.projects[$path].mcpServers // empty' "$CLAUDE_CONFIG" 2>/dev/null)
+
+    if [ -n "$MAIN_MCP_SERVERS" ] && [ "$MAIN_MCP_SERVERS" != "{}" ] && [ "$MAIN_MCP_SERVERS" != "null" ]; then
+        # Copy MCP servers config to worktree project
+        local TEMP_FILE=$(mktemp)
+        jq --arg main "$MAIN_REPO_PATH" --arg wt "$WORKTREE_PATH" '
+            .projects[$wt] = (.projects[$wt] // {}) |
+            .projects[$wt].mcpServers = .projects[$main].mcpServers
+        ' "$CLAUDE_CONFIG" > "$TEMP_FILE" && mv "$TEMP_FILE" "$CLAUDE_CONFIG"
+        echo "Copied Claude MCP config to worktree"
+    fi
+}
