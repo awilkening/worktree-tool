@@ -122,6 +122,25 @@ worker: bin/good_job"
         procfile_template=$(echo -e "$input_procfile")
     fi
 
+    # Check for gitignored .env* files
+    local symlink_env_files="false"
+    local env_files=()
+    for f in "$git_root"/.env*; do
+        if [ -f "$f" ] && git check-ignore -q "$f" 2>/dev/null; then
+            env_files+=("$(basename "$f")")
+        fi
+    done
+
+    if [ ${#env_files[@]} -gt 0 ]; then
+        echo ""
+        echo "Found gitignored env files: ${env_files[*]}"
+        local symlink_env
+        read "?Symlink these to worktrees? [Y/n]: " symlink_env 2>/dev/null || read -p "Symlink these to worktrees? [Y/n]: " symlink_env
+        if [[ ! "$symlink_env" =~ ^[Nn]$ ]]; then
+            symlink_env_files="true"
+        fi
+    fi
+
     # Write config file
     cat > "$config_file" << EOF
 # worktree-tool configuration
@@ -131,6 +150,7 @@ WORKTREE_DEV_DB_PREFIX="$dev_db_prefix"
 WORKTREE_TEST_DB_PREFIX="$test_db_prefix"
 WORKTREE_SOURCE_DB="$source_db"
 WORKTREE_SETUP_COMMAND="$setup_cmd"
+WORKTREE_SYMLINK_ENV_FILES="$symlink_env_files"
 
 WORKTREE_PROCFILE_TEMPLATE='$procfile_template'
 EOF

@@ -76,6 +76,17 @@ _worktree_add() {
         done
     fi
 
+    # Symlink gitignored .env* files if configured
+    if [ "$WORKTREE_SYMLINK_ENV_FILES" = "true" ]; then
+        local MAIN_REPO_PATH=$(pwd)
+        for envfile in .env*; do
+            if [ -f "$envfile" ] && git check-ignore -q "$envfile" 2>/dev/null; then
+                ln -s "$MAIN_REPO_PATH/$envfile" "$WORKTREE_PATH/$envfile"
+                echo "Symlinked: $envfile"
+            fi
+        done
+    fi
+
     # Create .overmind.env with port and DB config
     local WORKTREE_ABS_PATH=$(cd "$WORKTREE_PATH" && pwd)
     local SLOT=$(_worktree_get_slot "$WORKTREE_ABS_PATH")
