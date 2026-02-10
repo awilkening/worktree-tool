@@ -9,6 +9,8 @@ A comprehensive CLI tool for managing Git worktrees in Rails development environ
 - **Automatic port assignment** - Unique Rails and Vite ports per worktree to avoid collisions
 - **Process management** - Start/stop/restart dev servers with overmind or foreman
 - **Environment isolation** - Per-worktree environment variables via `.overmind.env`
+- **Secrets symlinking** - Automatically symlinks `.key` files and optionally `.env*` files
+- **Claude Code integration** - Copies MCP server config to worktrees (requires `jq`)
 - **Tab completion** - Full zsh and bash completion support
 - **Convenient aliases** - Quick shortcuts for common operations
 
@@ -18,6 +20,7 @@ A comprehensive CLI tool for managing Git worktrees in Rails development environ
 - PostgreSQL (for database cloning)
 - [overmind](https://github.com/DarthSim/overmind) or [foreman](https://github.com/ddollar/foreman)
 - Bash or Zsh shell
+- [jq](https://jqlang.github.io/jq/) (optional, for Claude Code MCP config)
 
 ## Installation
 
@@ -176,9 +179,15 @@ VITE_RUBY_PORT=3037
 
 Use `worktree run` to execute commands with these variables loaded.
 
-### Credentials
+### Credentials and Secrets
 
 Rails credentials `.key` files (which are gitignored) are automatically symlinked from the main repo to each worktree.
+
+If `WORKTREE_SYMLINK_ENV_FILES` is enabled during `worktree init`, gitignored `.env*` files are also symlinked.
+
+### Claude Code Integration
+
+If you use [Claude Code](https://claude.ai/download) with MCP servers (like Atlassian), `worktree add` automatically copies your MCP server configuration to the new worktree project. This requires `jq` to be installed.
 
 ## Tips
 
