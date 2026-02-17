@@ -183,11 +183,13 @@ _worktree_run() {
         return 1
     fi
 
-    # Source .overmind.env and export all variables, then run the command
-    set -a
-    source .overmind.env
-    set +a
-    "$@"
+    # Run in a subshell to avoid leaking env vars into the parent shell
+    (
+        set -a
+        source .overmind.env
+        set +a
+        "$@"
+    )
 }
 
 _worktree_console() {
