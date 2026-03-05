@@ -23,6 +23,7 @@ source "$WORKTREE_TOOL_DIR/lib/commands/add.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/setup.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/server.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/info.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/sync.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/remove.sh"
 source "$WORKTREE_TOOL_DIR/lib/completions.sh"
 
@@ -46,6 +47,7 @@ worktree() {
         connect)    _worktree_connect "$@" ;;
         cd)         _worktree_cd "$@" ;;
         list|ls)    _worktree_list "$@" ;;
+        sync)       _worktree_sync "$@" ;;
         prune)      _worktree_prune "$@" ;;
         remove|rm)  _worktree_remove "$@" ;;
         help|--help|-h|"") _worktree_usage ;;
@@ -77,6 +79,7 @@ Commands:
   connect <process>       Connect to overmind process (web, vite, worker)
   cd <name>               Jump to a worktree by name
   list [-a]               List worktrees for current project (-a for all)
+  sync                    Regenerate Procfile.local across all worktrees
   prune                   Clean up stale entries from port registry
   remove <branch>         Remove worktree [--wip|--force]
   help                    Show this help message
