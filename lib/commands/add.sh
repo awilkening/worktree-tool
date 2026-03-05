@@ -87,9 +87,21 @@ _worktree_add() {
         done
     fi
 
-    # Copy Claude Code MCP server config if available
+    # Mirror .claude directory structure with symlinked files (shares Claude Code settings across worktrees)
+    # We recreate the directory tree and symlink only files, so .claude/ in .git/info/exclude still works
+    # (git exclude patterns with trailing slash only match real directories, not symlinks)
     local MAIN_REPO_ABS_PATH=$(pwd)
     local WORKTREE_ABS_PATH=$(cd "$WORKTREE_PATH" && pwd)
+    if [ -d ".claude" ]; then
+        while IFS= read -r file; do
+            local rel_dir=$(dirname "$file")
+            mkdir -p "$WORKTREE_ABS_PATH/$rel_dir"
+            ln -s "$MAIN_REPO_ABS_PATH/$file" "$WORKTREE_ABS_PATH/$file"
+            echo "Symlinked: $file"
+        done < <(find .claude -type f)
+    fi
+
+    # Copy Claude Code MCP server config if available
     _worktree_copy_claude_mcp_config "$MAIN_REPO_ABS_PATH" "$WORKTREE_ABS_PATH"
 
     # Create .overmind.env with port and DB config
