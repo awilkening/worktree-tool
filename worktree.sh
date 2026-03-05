@@ -25,6 +25,7 @@ source "$WORKTREE_TOOL_DIR/lib/commands/server.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/info.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/sync.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/remove.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/clean.sh"
 source "$WORKTREE_TOOL_DIR/lib/completions.sh"
 
 # Main function
@@ -50,6 +51,7 @@ worktree() {
         sync)       _worktree_sync "$@" ;;
         prune)      _worktree_prune "$@" ;;
         remove|rm)  _worktree_remove "$@" ;;
+        clean)      _worktree_clean "$@" ;;
         help|--help|-h|"") _worktree_usage ;;
         *)
             echo "Unknown command: $ACTION"
@@ -81,6 +83,7 @@ Commands:
   list [-a]               List worktrees for current project (-a for all)
   sync                    Regenerate Procfile.local across all worktrees
   prune                   Clean up stale entries from port registry
+  clean [--dry-run|--force] Drop orphaned worktree databases
   remove <branch>         Remove worktree [--wip|--force]
   help                    Show this help message
 
