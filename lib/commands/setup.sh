@@ -39,6 +39,17 @@ _worktree_setup() {
             echo "Database cloned successfully."
         fi
 
+        # Create test database if TEST_DB_NAME is set
+        if [ -n "$TEST_DB_NAME" ]; then
+            if psql -lqt | cut -d \| -f 1 | grep -qw "$TEST_DB_NAME"; then
+                echo "Test database '$TEST_DB_NAME' already exists, skipping."
+            else
+                echo "Creating test database '$TEST_DB_NAME'..."
+                createdb "$TEST_DB_NAME" || exit 1
+                echo "Test database created. Rails will load the schema automatically."
+            fi
+        fi
+
         # Run setup command
         if [ -n "$WORKTREE_SETUP_COMMAND" ]; then
             echo ""
