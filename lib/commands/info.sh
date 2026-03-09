@@ -154,7 +154,7 @@ _worktree_prune() {
 
     local line path removed=0
     local temp_file="${WORKTREE_PORT_REGISTRY}.tmp"
-    > "$temp_file"
+    : > "$temp_file"
 
     while read -r line; do
         path="${line%%:*}"
@@ -166,7 +166,7 @@ _worktree_prune() {
         fi
     done < "$WORKTREE_PORT_REGISTRY"
 
-    mv "$temp_file" "$WORKTREE_PORT_REGISTRY"
+    command mv "$temp_file" "$WORKTREE_PORT_REGISTRY"
     echo "Pruned $removed stale entries."
 }
 

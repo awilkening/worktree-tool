@@ -50,7 +50,7 @@ _worktree_release_slot() {
     local WORKTREE_PATH="$1"
     if [ -f "$WORKTREE_PORT_REGISTRY" ]; then
         awk -F: -v path="$WORKTREE_PATH" '$1 != path' "$WORKTREE_PORT_REGISTRY" > "${WORKTREE_PORT_REGISTRY}.tmp"
-        mv "${WORKTREE_PORT_REGISTRY}.tmp" "$WORKTREE_PORT_REGISTRY"
+        command mv "${WORKTREE_PORT_REGISTRY}.tmp" "$WORKTREE_PORT_REGISTRY"
     fi
 }
 
@@ -87,7 +87,7 @@ _worktree_copy_claude_mcp_config() {
         jq --arg main "$MAIN_REPO_PATH" --arg wt "$WORKTREE_PATH" '
             .projects[$wt] = (.projects[$wt] // {}) |
             .projects[$wt].mcpServers = .projects[$main].mcpServers
-        ' "$CLAUDE_CONFIG" > "$TEMP_FILE" && mv "$TEMP_FILE" "$CLAUDE_CONFIG"
+        ' "$CLAUDE_CONFIG" > "$TEMP_FILE" && command mv "$TEMP_FILE" "$CLAUDE_CONFIG"
         echo "Copied Claude MCP config to worktree"
     fi
 }
