@@ -15,6 +15,7 @@ _worktree_load_project_config() {
     WORKTREE_SOURCE_DB="myapp_development"
     WORKTREE_SETUP_COMMAND="bin/update"
     WORKTREE_SYMLINK_ENV_FILES="false"
+    WORKTREE_SYMLINK_PATHS=""  # Space-separated paths to symlink from main repo (e.g. ".beads/dolt")
     WORKTREE_PROCFILE_TEMPLATE=""  # Must be set per-project
 
     # Load project config if it exists

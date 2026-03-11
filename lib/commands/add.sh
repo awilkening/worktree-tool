@@ -101,6 +101,21 @@ _worktree_add() {
         done < <(find .claude -type f)
     fi
 
+    # Symlink configured paths from main repo to worktree
+    if [ -n "$WORKTREE_SYMLINK_PATHS" ]; then
+        for symlink_path in $WORKTREE_SYMLINK_PATHS; do
+            if [ -e "$MAIN_REPO_ABS_PATH/$symlink_path" ]; then
+                local parent_dir=$(dirname "$WORKTREE_ABS_PATH/$symlink_path")
+                mkdir -p "$parent_dir"
+                if [ -e "$WORKTREE_ABS_PATH/$symlink_path" ]; then
+                    rm -rf "$WORKTREE_ABS_PATH/$symlink_path"
+                fi
+                ln -s "$MAIN_REPO_ABS_PATH/$symlink_path" "$WORKTREE_ABS_PATH/$symlink_path"
+                echo "Symlinked: $symlink_path"
+            fi
+        done
+    fi
+
     # Copy Claude Code MCP server config if available
     _worktree_copy_claude_mcp_config "$MAIN_REPO_ABS_PATH" "$WORKTREE_ABS_PATH"
 

@@ -73,6 +73,7 @@ worker: bin/sidekiq'
 | `WORKTREE_SOURCE_DB` | `myapp_development` | Database to clone from |
 | `WORKTREE_SETUP_COMMAND` | `bin/update` | Command to run during setup |
 | `WORKTREE_SYMLINK_ENV_FILES` | `false` | Symlink gitignored `.env*` files to worktrees |
+| `WORKTREE_SYMLINK_PATHS` | *(none)* | Space-separated paths to symlink from main repo (e.g. `.beads/dolt`) |
 | `WORKTREE_PROCFILE_TEMPLATE` | *(none)* | Procfile.local template (required for `worktree start`) |
 
 ## Usage
