@@ -20,6 +20,7 @@ source "$WORKTREE_TOOL_DIR/lib/config.sh"
 source "$WORKTREE_TOOL_DIR/lib/helpers.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/init.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/add.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/adopt.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/setup.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/server.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/info.sh"
@@ -36,6 +37,7 @@ worktree() {
     case "$ACTION" in
         init)       _worktree_init "$@" ;;
         add)        _worktree_add "$@" ;;
+        adopt)      _worktree_adopt "$@" ;;
         setup)      _worktree_setup "$@" ;;
         start)      _worktree_start "$@" ;;
         stop)       _worktree_stop "$@" ;;
@@ -69,6 +71,7 @@ Usage: worktree <command> [options]
 Commands:
   init                    Initialize .worktree.config for current project
   add <branch> [--setup]  Create a new worktree (optionally run full setup)
+  adopt                   Adopt an existing git worktree (generate .overmind.env, symlinks)
   setup                   Clone DB and run setup command (run from within worktree)
   start [-D]              Start dev server with unique ports (-D to daemonize)
   stop                    Stop dev server (overmind)

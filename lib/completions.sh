@@ -8,7 +8,7 @@ if [ -n "$ZSH_VERSION" ]; then
         case "$CURRENT" in
             2)
                 # Complete commands
-                compadd init add setup start stop restart info run console open logs connect cd list ls sync prune clean remove rm help
+                compadd init add adopt setup start stop restart info run console open logs connect cd list ls sync prune clean remove rm help
                 ;;
             3)
                 case "$cmd" in
@@ -50,7 +50,7 @@ if [ -n "$BASH_VERSION" ]; then
         local cmd="${COMP_WORDS[1]}"
 
         if [ "$COMP_CWORD" -eq 1 ]; then
-            COMPREPLY=($(compgen -W "init add setup start stop restart info run console open logs connect cd list ls sync prune clean remove rm help" -- "$cur"))
+            COMPREPLY=($(compgen -W "init add adopt setup start stop restart info run console open logs connect cd list ls sync prune clean remove rm help" -- "$cur"))
         elif [ "$COMP_CWORD" -eq 2 ]; then
             case "$cmd" in
                 remove|rm|cd)
@@ -84,6 +84,7 @@ fi
 alias wt='worktree'
 alias wtin='worktree init'
 alias wta='worktree add'
+alias wtad='worktree adopt'
 alias wts='worktree start'
 alias wtp='worktree stop'
 alias wtrs='worktree restart'

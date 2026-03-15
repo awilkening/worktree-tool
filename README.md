@@ -111,6 +111,7 @@ worktree start -D  # -D to daemonize
 |---------|-------------|
 | `worktree init` | Initialize `.worktree.config` for current project |
 | `worktree add <branch> [--setup]` | Create a new worktree (optionally run full setup) |
+| `worktree adopt` | Adopt an existing git worktree (generate config and symlinks) |
 | `worktree setup` | Clone DB and run setup command |
 | `worktree start [-D]` | Start dev server (-D to daemonize) |
 | `worktree stop` | Stop dev server |
@@ -134,6 +135,7 @@ worktree start -D  # -D to daemonize
 | `wt` | `worktree` |
 | `wtin` | `worktree init` |
 | `wta` | `worktree add` |
+| `wtad` | `worktree adopt` |
 | `wts` | `worktree start` |
 | `wtp` | `worktree stop` |
 | `wtrs` | `worktree restart` |
@@ -247,6 +249,7 @@ lib/
   commands/
     init.sh              # worktree init
     add.sh               # worktree add
+    adopt.sh             # worktree adopt
     setup.sh             # worktree setup
     server.sh            # start/stop/restart/logs/connect
     info.sh              # info/list/cd/prune/run/console/open
