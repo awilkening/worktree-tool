@@ -166,7 +166,7 @@ _worktree_prune() {
         fi
     done < "$WORKTREE_PORT_REGISTRY"
 
-    command mv "$temp_file" "$WORKTREE_PORT_REGISTRY"
+    /bin/mv "$temp_file" "$WORKTREE_PORT_REGISTRY"
     echo "Pruned $removed stale entries."
 }
 
