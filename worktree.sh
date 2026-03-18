@@ -87,7 +87,7 @@ Commands:
   sync                    Regenerate Procfile.local across all worktrees
   prune                   Clean up stale entries from port registry
   clean [--dry-run|--force] Drop orphaned worktree databases
-  remove <branch>         Remove worktree [--wip|--force]
+  remove <branch>         Remove worktree [--wip|--force|--yes]
   help                    Show this help message
 
 Workflow:

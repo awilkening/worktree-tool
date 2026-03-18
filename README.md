@@ -125,7 +125,7 @@ worktree start -D  # -D to daemonize
 | `worktree cd <name>` | Jump to a worktree |
 | `worktree list [-a]` | List worktrees for current project (-a for all) |
 | `worktree prune` | Clean up stale port registry entries |
-| `worktree remove <branch>` | Remove worktree (offers --wip or --force) |
+| `worktree remove <branch>` | Remove worktree (offers --wip, --force, or --yes) |
 | `worktree help` | Show help message |
 
 ### Aliases

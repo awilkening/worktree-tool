@@ -5,7 +5,7 @@ _worktree_remove() {
     local FLAG="$2"
 
     if [ -z "$INPUT" ]; then
-        echo "Usage: worktree remove <branch-name|worktree-dir> [--wip|--force]"
+        echo "Usage: worktree remove <branch-name|worktree-dir> [--wip|--force|--yes]"
         return 1
     fi
 
@@ -17,6 +17,16 @@ _worktree_remove() {
     local MAIN_REPO_PATH
     local BRANCH_NAME
     local HAD_CHANGES=false
+    local AUTO_YES=false
+
+    # Check for --yes flag (can be in any position after input)
+    if [ "$FLAG" = "--yes" ] || [ "$2" = "--yes" ] || [ "$3" = "--yes" ]; then
+        AUTO_YES=true
+        # If --yes is the only flag, default to --wip for uncommitted changes
+        if [ "$FLAG" = "--yes" ]; then
+            FLAG=""
+        fi
+    fi
 
     # Determine the main repo name (either current dir or derived from worktree name)
     local MAIN_REPO_NAME
@@ -65,26 +75,30 @@ _worktree_remove() {
     if git -C "$WORKTREE_PATH" status --porcelain | grep -q .; then
         HAD_CHANGES=true
 
-        # If no flag provided, show changes and prompt
-        if [ -z "$FLAG" ]; then
-            echo "Worktree has uncommitted changes:"
-            git -C "$WORKTREE_PATH" status --short
-            echo ""
-            echo "WARNING: Any stashes in this worktree will be lost!"
-            echo ""
-            echo "How would you like to proceed?"
-            echo "  1) wip    - Create a WIP commit before removing (recommended)"
-            echo "  2) force  - Discard all changes and remove"
-            echo "  3) cancel - Abort removal"
-            echo ""
-            read "?Choose [1-3]: " choice 2>/dev/null || read -p "Choose [1-3]: " choice
+        # If no flag provided, show changes and prompt (or default to --wip with --yes)
+        if [ -z "$FLAG" ] || [ "$FLAG" = "--yes" ]; then
+            if [ "$AUTO_YES" = true ]; then
+                FLAG="--wip"
+            else
+                echo "Worktree has uncommitted changes:"
+                git -C "$WORKTREE_PATH" status --short
+                echo ""
+                echo "WARNING: Any stashes in this worktree will be lost!"
+                echo ""
+                echo "How would you like to proceed?"
+                echo "  1) wip    - Create a WIP commit before removing (recommended)"
+                echo "  2) force  - Discard all changes and remove"
+                echo "  3) cancel - Abort removal"
+                echo ""
+                read "?Choose [1-3]: " choice 2>/dev/null || read -p "Choose [1-3]: " choice
 
-            case "$choice" in
-                1|wip)    FLAG="--wip" ;;
-                2|force)  FLAG="--force" ;;
-                3|cancel) echo "Aborted."; return 0 ;;
-                *)        echo "Invalid choice. Aborted."; return 1 ;;
-            esac
+                case "$choice" in
+                    1|wip)    FLAG="--wip" ;;
+                    2|force)  FLAG="--force" ;;
+                    3|cancel) echo "Aborted."; return 0 ;;
+                    *)        echo "Invalid choice. Aborted."; return 1 ;;
+                esac
+            fi
         fi
 
         # Handle the flag
@@ -99,7 +113,7 @@ _worktree_remove() {
                 ;;
             *)
                 echo "Unknown flag: $FLAG"
-                echo "Use --wip or --force"
+                echo "Use --wip, --force, or --yes"
                 return 1
                 ;;
         esac
@@ -126,7 +140,11 @@ _worktree_remove() {
         done
 
         local drop_db
-        read "?Drop these databases? [y/N]: " drop_db 2>/dev/null || read -p "Drop these databases? [y/N]: " drop_db
+        if [ "$AUTO_YES" = true ]; then
+            drop_db="y"
+        else
+            read "?Drop these databases? [y/N]: " drop_db 2>/dev/null || read -p "Drop these databases? [y/N]: " drop_db
+        fi
 
         if [[ "$drop_db" =~ ^[Yy]$ ]]; then
             for db in "${DBS_TO_DROP[@]}"; do
