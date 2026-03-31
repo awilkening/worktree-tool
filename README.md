@@ -256,6 +256,20 @@ lib/
     remove.sh            # worktree remove
 ```
 
+## Non-Interactive Shells (Claude Code, CI, scripts)
+
+The `worktree` shell function is only available in interactive shells where `~/.worktree.sh` is sourced. For non-interactive contexts like Claude Code, CI pipelines, or shell scripts, a standalone `bin/worktree` executable is installed to `~/.local/bin/worktree`.
+
+If the shell function shadows the executable, use `command worktree` to bypass it:
+
+```bash
+command worktree adopt
+command worktree setup
+command worktree list -a
+```
+
+The only command unavailable in non-interactive shells is `worktree cd` (which changes the parent shell's directory).
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file.

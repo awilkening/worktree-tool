@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+# Standalone worktree executable for non-interactive shells (e.g. Claude Code).
+# Interactive shells use the sourced function from worktree.sh for cd/completions/aliases.
+
+set -e
+
+# Resolve the tool directory (follow symlinks to find the real bin/)
+SCRIPT="${BASH_SOURCE[0]}"
+while [ -L "$SCRIPT" ]; do
+    SCRIPT="$(readlink "$SCRIPT")"
+done
+BIN_DIR="$(cd "$(dirname "$SCRIPT")" && pwd)"
+WORKTREE_TOOL_DIR="$(cd "$BIN_DIR/.." && pwd)"
+
+# Source config, helpers, and command files (skip completions/aliases)
+source "$WORKTREE_TOOL_DIR/lib/config.sh"
+source "$WORKTREE_TOOL_DIR/lib/helpers.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/init.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/add.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/adopt.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/setup.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/server.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/info.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/sync.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/remove.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/clean.sh"
+
+ACTION="$1"
+shift 2>/dev/null || true
+
+case "$ACTION" in
+    init)       _worktree_init "$@" ;;
+    add)        _worktree_add "$@" ;;
+    adopt)      _worktree_adopt "$@" ;;
+    setup)      _worktree_setup "$@" ;;
+    start)      _worktree_start "$@" ;;
+    stop)       _worktree_stop "$@" ;;
+    restart)    _worktree_restart "$@" ;;
+    info|status) _worktree_info "$@" ;;
+    run)        _worktree_run "$@" ;;
+    console)    _worktree_console "$@" ;;
+    open)       _worktree_open "$@" ;;
+    logs)       _worktree_logs "$@" ;;
+    connect)    _worktree_connect "$@" ;;
+    cd)
+        echo "Error: 'worktree cd' only works in interactive shells."
+        echo "Use: cd \$(worktree list | ...)"
+        exit 1
+        ;;
+    list|ls)    _worktree_list "$@" ;;
+    sync)       _worktree_sync "$@" ;;
+    prune)      _worktree_prune "$@" ;;
+    remove|rm)  _worktree_remove "$@" ;;
+    clean)      _worktree_clean "$@" ;;
+    help|--help|-h|"")
+        cat << 'EOF'
+Usage: worktree <command> [options]
+
+Commands:
+  init                    Initialize .worktree.config for current project
+  add <branch> [--setup]  Create a new worktree (optionally run full setup)
+  adopt                   Adopt an existing git worktree (generate .overmind.env, symlinks)
+  setup                   Clone DB and run setup command (run from within worktree)
+  start [-D]              Start dev server with unique ports (-D to daemonize)
+  stop                    Stop dev server
+  restart                 Stop and start dev server
+  info                    Show current worktree's URL and config
+  run <command>           Run a command with worktree env vars loaded
+  console                 Open console with worktree env
+  open                    Open app URL in browser
+  logs                    View dev server logs
+  connect <process>       Connect to a running process
+  cd <name>               Jump to a worktree by name (interactive shells only)
+  list [-a]               List worktrees for current project (-a for all)
+  sync                    Regenerate Procfile.local across all worktrees
+  prune                   Clean up stale entries from port registry
+  clean [--dry-run|--force] Drop orphaned worktree databases
+  remove <branch>         Remove worktree [--wip|--force|--yes]
+  help                    Show this help message
+EOF
+        ;;
+    *)
+        echo "Unknown command: $ACTION"
+        exit 1
+        ;;
+esac

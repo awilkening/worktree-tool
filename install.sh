@@ -113,8 +113,25 @@ main() {
         git clone --quiet "$REPO_URL" "$INSTALL_DIR"
     fi
 
-    # Make script executable
+    # Make scripts executable
     chmod +x "$INSTALL_DIR/worktree.sh"
+    chmod +x "$INSTALL_DIR/bin/worktree"
+
+    # Install standalone executable to ~/.local/bin for non-interactive shells
+    mkdir -p "$HOME/.local/bin"
+    local bin_link="$HOME/.local/bin/worktree"
+    if [ -L "$bin_link" ] || [ -e "$bin_link" ]; then
+        rm "$bin_link"
+    fi
+    ln -s "$INSTALL_DIR/bin/worktree" "$bin_link"
+    info "Created executable: ~/.local/bin/worktree"
+
+    # Warn if ~/.local/bin is not in PATH
+    if ! echo "$PATH" | tr ':' '\n' | grep -qx "$HOME/.local/bin"; then
+        warn "\$HOME/.local/bin is not in your PATH"
+        echo "  Add this to your shell config: export PATH=\"\$HOME/.local/bin:\$PATH\""
+        echo ""
+    fi
 
     # Create symlink at ~/.worktree.sh
     local symlink_path="$HOME/.worktree.sh"
