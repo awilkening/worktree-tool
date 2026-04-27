@@ -27,6 +27,7 @@ source "$WORKTREE_TOOL_DIR/lib/commands/info.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/sync.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/remove.sh"
 source "$WORKTREE_TOOL_DIR/lib/commands/clean.sh"
+source "$WORKTREE_TOOL_DIR/lib/commands/statusline.sh"
 source "$WORKTREE_TOOL_DIR/lib/completions.sh"
 
 # Main function
@@ -54,6 +55,7 @@ worktree() {
         prune)      _worktree_prune "$@" ;;
         remove|rm)  _worktree_remove "$@" ;;
         clean)      _worktree_clean "$@" ;;
+        statusline) _worktree_statusline "$@" ;;
         help|--help|-h|"") _worktree_usage ;;
         *)
             echo "Unknown command: $ACTION"
@@ -88,6 +90,7 @@ Commands:
   prune                   Clean up stale entries from port registry
   clean [--dry-run|--force] Drop orphaned worktree databases
   remove <branch>         Remove worktree [--wip|--force|--yes]
+  statusline              Print one-line worktree info (for Claude Code statusLine)
   help                    Show this help message
 
 Workflow:
