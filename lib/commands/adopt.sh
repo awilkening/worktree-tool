@@ -29,6 +29,7 @@ _worktree_adopt() {
     # Skip if already adopted
     if [ -f ".overmind.env" ]; then
         echo "This worktree already has .overmind.env — it may have been adopted already."
+        echo "Run 'worktree sync' from the main repository to refresh shared symlinks."
         echo "Remove .overmind.env first if you want to re-adopt."
         return 1
     fi
@@ -65,17 +66,9 @@ _worktree_adopt() {
         done
     fi
 
-    # Mirror .claude directory structure with symlinked files
-    if [ -d "$MAIN_REPO_ABS_PATH/.claude" ]; then
-        while IFS= read -r file; do
-            local rel_dir=$(dirname "$file")
-            if [ ! -e "$WORKTREE_ABS_PATH/$file" ]; then
-                mkdir -p "$WORKTREE_ABS_PATH/$rel_dir"
-                ln -s "$MAIN_REPO_ABS_PATH/$file" "$WORKTREE_ABS_PATH/$file"
-                echo "Symlinked: $file"
-            fi
-        done < <(cd "$MAIN_REPO_ABS_PATH" && find .claude -type f)
-    fi
+    # Mirror project-local assistant config directories with symlinked files
+    _worktree_mirror_project_config_dir "$MAIN_REPO_ABS_PATH" "$WORKTREE_ABS_PATH" ".claude"
+    _worktree_mirror_project_config_dir "$MAIN_REPO_ABS_PATH" "$WORKTREE_ABS_PATH" ".codex"
 
     # Symlink configured paths from main repo to worktree
     if [ -n "$WORKTREE_SYMLINK_PATHS" ]; then

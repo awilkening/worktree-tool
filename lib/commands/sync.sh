@@ -11,26 +11,35 @@ _worktree_sync() {
         return 1
     fi
 
-    if [ -z "$WORKTREE_PROCFILE_TEMPLATE" ]; then
-        echo "Error: WORKTREE_PROCFILE_TEMPLATE not set in .worktree.config"
-        return 1
-    fi
-
-    local CURRENT_DIR=$(basename "$(pwd)")
-    local updated=0
-    local skipped=0
+    local MAIN_REPO_ABS_PATH=$(git rev-parse --path-format=absolute --show-toplevel 2>/dev/null)
+    local MAIN_REPO_REAL_PATH=$(cd "$MAIN_REPO_ABS_PATH" && pwd -P)
+    local checked=0
+    local procfiles=0
 
     # Iterate over worktrees (skip the main repo)
     while IFS= read -r wt_path; do
-        [ "$wt_path" = "$(pwd)" ] && continue
-
         if [ -d "$wt_path" ]; then
-            echo "$WORKTREE_PROCFILE_TEMPLATE" > "$wt_path/Procfile.local"
-            echo "Updated: $(basename "$wt_path")"
-            updated=$((updated + 1))
+            local wt_real_path=$(cd "$wt_path" && pwd -P)
+            [ "$wt_real_path" = "$MAIN_REPO_REAL_PATH" ] && continue
+
+            echo "Syncing: $(basename "$wt_path")"
+
+            if [ -n "$WORKTREE_PROCFILE_TEMPLATE" ]; then
+                echo "$WORKTREE_PROCFILE_TEMPLATE" > "$wt_path/Procfile.local"
+                procfiles=$((procfiles + 1))
+            fi
+
+            _worktree_mirror_project_config_dir "$MAIN_REPO_ABS_PATH" "$wt_path" ".claude"
+            _worktree_mirror_project_config_dir "$MAIN_REPO_ABS_PATH" "$wt_path" ".codex"
+            checked=$((checked + 1))
         fi
     done < <(git worktree list --porcelain | awk '/^worktree /{print $2}')
 
     echo ""
-    echo "Synced Procfile.local to $updated worktree(s)."
+    if [ -n "$WORKTREE_PROCFILE_TEMPLATE" ]; then
+        echo "Synced Procfile.local to $procfiles worktree(s)."
+    else
+        echo "Skipped Procfile.local: WORKTREE_PROCFILE_TEMPLATE not set."
+    fi
+    echo "Checked assistant config symlinks in $checked worktree(s)."
 }

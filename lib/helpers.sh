@@ -66,6 +66,32 @@ _worktree_get_main_repo() {
     git rev-parse --path-format=absolute --git-common-dir 2>/dev/null | sed 's/\/.git$//'
 }
 
+# Mirror a project-local config directory with symlinked files.
+# This keeps gitignored directories like .claude/ and .codex/ as real
+# directories in worktrees while sharing their file contents from main.
+_worktree_mirror_project_config_dir() {
+    local MAIN_REPO_PATH="$1"
+    local WORKTREE_PATH="$2"
+    local CONFIG_DIR="$3"
+
+    if [ ! -d "$MAIN_REPO_PATH/$CONFIG_DIR" ]; then
+        return 0
+    fi
+
+    while IFS= read -r file; do
+        local rel_dir=$(dirname "$file")
+        local target="$WORKTREE_PATH/$file"
+
+        if [ -e "$target" ] || [ -L "$target" ]; then
+            continue
+        fi
+
+        mkdir -p "$WORKTREE_PATH/$rel_dir"
+        ln -s "$MAIN_REPO_PATH/$file" "$target"
+        echo "Symlinked: $file"
+    done < <(cd "$MAIN_REPO_PATH" && find "$CONFIG_DIR" -type f)
+}
+
 # Copy Claude Code MCP server config from main repo to worktree
 _worktree_copy_claude_mcp_config() {
     local MAIN_REPO_PATH="$1"

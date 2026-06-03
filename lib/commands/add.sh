@@ -87,19 +87,13 @@ _worktree_add() {
         done
     fi
 
-    # Mirror .claude directory structure with symlinked files (shares Claude Code settings across worktrees)
-    # We recreate the directory tree and symlink only files, so .claude/ in .git/info/exclude still works
-    # (git exclude patterns with trailing slash only match real directories, not symlinks)
+    # Mirror project-local assistant config directories with symlinked files.
+    # We recreate the directory tree and symlink only files, so directory patterns
+    # in .git/info/exclude still work (trailing slash patterns need real dirs).
     local MAIN_REPO_ABS_PATH=$(pwd)
     local WORKTREE_ABS_PATH=$(cd "$WORKTREE_PATH" && pwd)
-    if [ -d ".claude" ]; then
-        while IFS= read -r file; do
-            local rel_dir=$(dirname "$file")
-            mkdir -p "$WORKTREE_ABS_PATH/$rel_dir"
-            ln -s "$MAIN_REPO_ABS_PATH/$file" "$WORKTREE_ABS_PATH/$file"
-            echo "Symlinked: $file"
-        done < <(find .claude -type f)
-    fi
+    _worktree_mirror_project_config_dir "$MAIN_REPO_ABS_PATH" "$WORKTREE_ABS_PATH" ".claude"
+    _worktree_mirror_project_config_dir "$MAIN_REPO_ABS_PATH" "$WORKTREE_ABS_PATH" ".codex"
 
     # Symlink configured paths from main repo to worktree
     if [ -n "$WORKTREE_SYMLINK_PATHS" ]; then

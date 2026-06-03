@@ -86,7 +86,7 @@ Commands:
   connect <process>       Connect to overmind process (web, vite, worker)
   cd <name>               Jump to a worktree by name
   list [-a]               List worktrees for current project (-a for all)
-  sync                    Regenerate Procfile.local across all worktrees
+  sync                    Regenerate Procfile.local and assistant config symlinks
   prune                   Clean up stale entries from port registry
   clean [--dry-run|--force] Drop orphaned worktree databases
   remove <branch>         Remove worktree [--wip|--force|--yes]

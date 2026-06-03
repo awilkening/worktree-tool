@@ -10,7 +10,7 @@ A comprehensive CLI tool for managing Git worktrees in Rails development environ
 - **Process management** - Start/stop/restart dev servers with overmind or foreman
 - **Environment isolation** - Per-worktree environment variables via `.overmind.env`
 - **Secrets symlinking** - Automatically symlinks `.key` files and optionally `.env*` files
-- **Claude Code integration** - Copies MCP server config to worktrees (requires `jq`)
+- **Assistant config integration** - Mirrors project `.claude` and `.codex` directories; copies Claude MCP config (requires `jq`)
 - **Tab completion** - Full zsh and bash completion support
 - **Convenient aliases** - Quick shortcuts for common operations
 
@@ -124,6 +124,7 @@ worktree start -D  # -D to daemonize
 | `worktree connect <process>` | Connect to overmind process |
 | `worktree cd <name>` | Jump to a worktree |
 | `worktree list [-a]` | List worktrees for current project (-a for all) |
+| `worktree sync` | Regenerate Procfile.local and assistant config symlinks across all worktrees |
 | `worktree prune` | Clean up stale port registry entries |
 | `worktree remove <branch>` | Remove worktree (offers --wip, --force, or --yes) |
 | `worktree help` | Show help message |
@@ -188,7 +189,11 @@ Rails credentials `.key` files (which are gitignored) are automatically symlinke
 
 If `WORKTREE_SYMLINK_ENV_FILES` is enabled during `worktree init`, gitignored `.env*` files are also symlinked.
 
-### Claude Code Integration
+### Assistant Config Integration
+
+Project-local `.claude` and `.codex` directories are mirrored into new or adopted worktrees by recreating the directory tree and symlinking each file from the main repo.
+
+Run `worktree sync` from the main repo to re-check existing worktrees and symlink project-local assistant config files that were added later.
 
 If you use [Claude Code](https://claude.ai/download) with MCP servers (like Atlassian), `worktree add` automatically copies your MCP server configuration to the new worktree project. This requires `jq` to be installed.
 
