@@ -159,6 +159,16 @@ _worktree_remove() {
     # Release the port slot
     _worktree_release_slot "$WORKTREE_PATH"
 
+    # Tear down the worktree's Docker Compose stack so its network/containers
+    # don't accumulate (Docker has a finite default address pool for networks).
+    if command -v docker &> /dev/null && docker info &> /dev/null 2>&1; then
+        if [ -f "$WORKTREE_PATH/docker-compose.yml" ] || [ -f "$WORKTREE_PATH/compose.yml" ]; then
+            echo "Tearing down Docker Compose stack..."
+            (cd "$WORKTREE_PATH" && docker compose down --remove-orphans 2>&1 | sed 's/^/  /') || \
+                echo "  (compose down failed - clean up manually with 'docker network prune' if needed)"
+        fi
+    fi
+
     # Remove the worktree
     echo "Removing worktree at: $WORKTREE_PATH"
     if [ "$FLAG" = "--force" ]; then
